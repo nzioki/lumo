@@ -968,7 +968,9 @@
               r/*alias-map* (current-alias-map)]
       [(r/read {:read-cond :allow :features #{:cljs}} reader) (read-chars reader)])))
 
-(defn- ns-for-source [source]
+(defn- ns-for-source
+  "Read the namespace iff source is a :ns or :ns* form."
+  [source]
   (let [[ns-form] (repl-read-string source)
         {:keys [op name]} (no-warn (ana/analyze (ana/empty-env) ns-form))]
     (when (or (keyword-identical? op :ns)
@@ -1109,7 +1111,7 @@
             st
             source
             (cond
-              expression? source
+              expression? (ns-for-source source)
               filename (or (ns-for-source source) filename)
               :else "source")
             eval-opts
