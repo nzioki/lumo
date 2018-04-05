@@ -467,7 +467,7 @@
 
 (defn- demunge-protocol-fn
   [demunge-maps munged-sym]
-  (let [[_ ns prot fn] (re-find #"(.*)\$(.*)\$(.*)\$arity\$.*" munged-sym)]
+  (let [[_ obj ns prot fn] (re-find #"(.*)\.(.*)\$(.*)\$(.*)\$arity\$.*" munged-sym)]
     (when ns
       (when-let [prot-sym (lookup-sym demunge-maps (str ns "$" prot))]
         (when-let [fn-sym (lookup-sym demunge-maps (str ns "$" fn))]
