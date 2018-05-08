@@ -205,3 +205,48 @@ Special Form
     (is (= 3 (core/eval (list + 1 2))))
     (is (= 17 (core/eval '(let [a 10] (+ 3 4 a)))))
     (is (= 5 ((eval (eval '+)) 2 3)))))
+
+(deftest stacktrace-function->sym
+  (is (= "cljs$core$seq" (lumo/stacktrace-function->sym "cljs.core.seq")))
+  (is (= "cljs$core$seq" (lumo/stacktrace-function->sym "Object.cljs.core.seq")) "the Object prefix should be trimmed away")
+  (is (= "cljs$core$ffirst" (lumo/stacktrace-function->sym "cljs.core.ffirst")))
+  (is (= "cljs.core.LazySeq.cljs$core$ISeqable$_seq$arity$1"
+         (lumo/stacktrace-function->sym "cljs.core.LazySeq.cljs$core$ISeqable$_seq$arity$1")) "should not convert strings representing protocols")
+
+
+  (is (nil? (lumo/stacktrace-function->sym nil))))
+
+(comment
+  (def demunge-maps (cons @lumo/core-demunge-map (lumo/non-core-demunge-maps)))
+  )
+
+(deftest demunge-tests
+  (is (nil? (lumo/demunge-sym "") "demunging an empty string should return nil"))
+
+  (testing "demunging a symbol"
+    (is (= '{:ns cljs.core, :sym cljs.core/seq} (lumo/demunge-sym "cljs$core$seq")))
+    (is (= '{:ns cljs.core, :sym cljs.core/ffirst} (lumo/demunge-sym "cljs$core$ffirst"))))
+
+  (testing "demunging a protocol"
+    (is (= '{:ns cljs.core :sym cljs.core/-seq :protocol cljs.core/ISeqable}
+           (lumo/demunge-sym "cljs.core.LazySeq.cljs$core$ISeqable$_seq$arity$1")))
+    (is (= '{:ns cljs.core :obj Function.cljs.core.apply :sym cljs.core/-invoke :protocol cljs.core/IFn}
+           (lumo/demunge-sym "Function.cljs.core.apply.cljs$core$IFn$_invoke$arity$2")))
+    (is (= '{:ns cljs.core, :obj Function.cljs.core.trampoline :sym cljs.core/-invoke, :protocol cljs.core/IFn}
+           (lumo/demunge-sym "Function.cljs.core.trampoline.cljs$core$IFn$_invoke$arity$variadic"))))
+
+  (testing "demunging a local"
+    ;; TODO
+
+    ))
+
+(deftest guess-embedded-stacktrace-file
+  (let [st-entry {:file "vm.js" :function "Script.runInThisContext" :line 65 :column 33}]
+    (is (= st-entry (lumo/guess-embedded-stacktrace-file st-entry)) "it should not touch an entry that has :file different from <embedded>"))
+
+  (let [st-entry {:file "evalmachine.<anonymous>" :function "Object.cljs.core.first" :line 503 :column 213}]
+
+    (is (= st-entry (lumo/guess-embedded-stacktrace-file st-entry))))
+
+  (let [st-entry {:file "evalmachine.<anonymous>" :function "cljs.core.ffirst" :line 563 :column 448}]
+    (is (= st-entry (lumo/guess-embedded-stacktrace-file st-entry)))))

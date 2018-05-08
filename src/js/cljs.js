@@ -150,6 +150,7 @@ function newDevelopmentContext(): vm$Context {
       addSourcePaths: lumo.addSourcePaths,
       getSourcePaths: lumo.getSourcePaths,
       removeSourcePath: lumo.removeSourcePath,
+      isBundled: lumo.isBundled,
     },
     global: undefined,
   };
@@ -184,6 +185,7 @@ function newClojureScriptContext(): { [key: string]: mixed } {
     addSourcePaths: lumo.addSourcePaths,
     getSourcePaths: lumo.getSourcePaths,
     removeSourcePath: lumo.removeSourcePath,
+    isBundled: lumo.isBundled,
   };
 
   return global;
